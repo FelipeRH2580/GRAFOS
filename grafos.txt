@@ -1,0 +1,207 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <queue>
+#include <unordered_set>
+
+using namespace std;
+
+class Grafo {
+private:
+    unordered_map<int, unordered_set<int>> listaAdyacencia; // Lista de adyacencia para almacenar los nodos adyacentes
+    unordered_map<int, int> nodoAIndice; // Mapeo de nodo a índice
+    unordered_map<int, int> indiceANodo; // Mapeo de índice a nodo
+
+public:
+    // Constructor
+    Grafo() {}
+
+    // Método para agregar una arista entre dos nodos
+    void agregarArista(int u, int v) {
+        // Agregar v a la lista de adyacencia de u y viceversa
+        listaAdyacencia[u].insert(v);
+        listaAdyacencia[v].insert(u);
+
+        // Agregar los nodos al mapeo si aún no están presentes
+        if (nodoAIndice.find(u) == nodoAIndice.end()) {
+            int indice = nodoAIndice.size();
+            nodoAIndice[u] = indice;
+            indiceANodo[indice] = u;
+        }
+        if (nodoAIndice.find(v) == nodoAIndice.end()) {
+            int indice = nodoAIndice.size();
+            nodoAIndice[v] = indice;
+            indiceANodo[indice] = v;
+        }
+    }
+
+    // Método para imprimir el grafo
+    void imprimirGrafo() {
+        for (auto& nodo : listaAdyacencia) {
+            cout << "Nodo " << nodo.first << " está conectado con:\n";
+            for (int vecino : nodo.second) {
+                cout << "  |--> " << vecino << endl;
+            }
+            cout << endl;
+        }
+    }
+
+    // Método para obtener la matriz de adyacencia
+    vector<vector<int>> matrizAdyacencia() {
+        int n = listaAdyacencia.size();
+        vector<vector<int>> matriz(n, vector<int>(n, 0));
+
+        for (auto& nodo : listaAdyacencia) {
+            for (int vecino : nodo.second) {
+                int u = nodoAIndice[nodo.first];
+                int v = nodoAIndice[vecino];
+                matriz[u][v] = 1;
+                matriz[v][u] = 1;
+            }
+        }
+
+        return matriz;
+    }
+
+    // Método para imprimir la matriz de adyacencia
+    void imprimirMatrizAdyacencia() {
+        vector<vector<int>> matriz = matrizAdyacencia();
+
+        cout << "Matriz de adyacencia del grafo:\n";
+        for (int i = 0; i < nodoAIndice.size(); ++i) {
+            cout << indiceANodo[i] << "  ";
+        }
+        cout << endl;
+
+        for (int i = 0; i < matriz.size(); ++i) {
+            cout << indiceANodo[i] << "   ";
+            for (int j = 0; j < matriz[i].size(); ++j) {
+                cout << matriz[i][j] << "   ";
+            }
+            cout << endl;
+        }
+    }
+
+    // Método para encontrar el camino más corto entre dos nodos usando BFS
+    void caminoMasCorto(int inicio, int fin) {
+    unordered_map<int, bool> visitado;
+    unordered_map<int, int> distancia;
+    unordered_map<int, int> predecesor;
+
+    queue<int> cola;
+    cola.push(inicio);
+    visitado[inicio] = true;
+    distancia[inicio] = 0;
+    predecesor[inicio] = -1;  // Asegúrate de establecer el predecesor del nodo de inicio en -1
+
+    while (!cola.empty()) {
+        int nodoActual = cola.front();
+        cola.pop();
+
+        for (int vecino : listaAdyacencia[nodoActual]) {
+            if (!visitado[vecino]) {
+                cola.push(vecino);
+                visitado[vecino] = true;
+                distancia[vecino] = distancia[nodoActual] + 1;
+                predecesor[vecino] = nodoActual;
+            }
+        }
+    }
+
+    if (!visitado[fin]) {
+        cout << "No existe un camino entre " << inicio << " y " << fin << ".\n";
+        return;
+    }
+
+    vector<int> camino;
+    for (int v = fin; v != -1; v = predecesor[v]) {
+        camino.push_back(v);
+    }
+    reverse(camino.begin(), camino.end());
+
+    cout << "El camino más corto entre " << inicio << " y " << fin << " es:\n";
+    for (int nodo : camino) {
+        cout << nodo << " ";
+    }
+    cout << "\n";
+}
+
+};
+
+int main() {
+    Grafo grafo;
+    int eleccion;
+
+    while (true) {
+        cout << "\nMenú:\n";
+        cout << "1. Ingresar nodos\n";
+        cout << "2. Establecer conexiones\n";
+        cout << "3. Mostrar grafo\n";
+        cout << "4. Mostrar matriz de adyacencia\n";
+        cout << "5. Mostrar camino más corto\n";
+        cout << "6. Salir\n";
+        cout << "Ingrese su elección: ";
+        cin >> eleccion;
+
+        switch (eleccion) {
+            case 1: {
+                int numNodos;
+                cout << "Ingrese el número de nodos en el grafo: ";
+                cin >> numNodos;
+
+                cout << "Ingrese los nodos del grafo (pueden ser positivos o negativos): ";
+                for (int i = 0; i < numNodos; ++i) {
+                    int nodo;
+                    cin >> nodo;
+                    grafo.agregarArista(nodo, nodo); // Agregar el nodo al grafo
+                }
+
+                cout << "Nodos ingresados exitosamente.\n";
+                break;
+            }
+            case 2: {
+                int numConexiones;
+                cout << "Ingrese el número de conexiones en el grafo: ";
+                cin >> numConexiones;
+
+                for (int i = 0; i < numConexiones; ++i) {
+                    int u, v;
+                    cout << "Ingrese la conexión " << i + 1 << " (formato: u v): ";
+                    cin >> u >> v;
+                    grafo.agregarArista(u, v);
+                }
+
+                cout << "Conexiones establecidas exitosamente.\n";
+                break;
+            }
+            case 3: {
+                cout << "\nEl grafo generado es:\n";
+                grafo.imprimirGrafo();
+                break;
+            }
+            case 4: {
+                cout << "\n";
+                grafo.imprimirMatrizAdyacencia();
+                break;
+            }
+            case 5: {
+                int inicio, fin;
+                cout << "Ingrese el nodo de inicio: ";
+                cin >> inicio;
+                cout << "Ingrese el nodo de fin: ";
+                cin >> fin;
+
+                grafo.caminoMasCorto(inicio, fin);
+                break;
+            }
+            case 6:
+                cout << "Saliendo del programa...\n";
+                return 0;
+            default:
+                cout << "Opción inválida. Inténtelo de nuevo.\n";
+        }
+    }
+
+    return 0;
+}
